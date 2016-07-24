@@ -7,6 +7,12 @@ $!/bin/sh
 ZIM_DIR="$HOME/git/tao/zim"
 
 ln -s $ZIM_DIR $HOME/.zim
-stow -d $ZIM_DIR -t $HOME -s templates
+
+#stow -d $ZIM_DIR -t $HOME -s templates
+# manual link
+setopt EXTENDED_GLOB
+for rcfile in $ZIM_DIR/templates/; do
+    ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
+done
 
 source $ZIM_DIR/templates/zlogin
