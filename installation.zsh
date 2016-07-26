@@ -1,20 +1,24 @@
-$!/bin/sh
+#
+# zim installation
+#
 
-# if execute inside the dir, the following would work just fine.
-#ZIM_DIR=`pwd`
+# Get dirname of this script
+ZIM_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# assume the repo is cloned in $HOME/git/tao/.
-ZIM_DIR="$HOME/git/tao/zim"
+echo "linking zim dir"
+ln -s ${ZIM_DIR} ${HOME}/.zim
 
-ln -s $ZIM_DIR $HOME/.zim
-rm $HOME/.zshrc
-rm $HOME/.*.zwc
+echo "Cleaning up dotfiles in home dir"
+rm ${HOME}/.zshrc
+rm ${HOME}/.zlogin
+rm ${HOME}/.zprofile
+rm ${HOME}/.zcomdump*
+rm ${HOME}/.*.zwc
 
-#stow -d $ZIM_DIR -t $HOME -s templates
-# manual link
-setopt EXTENDED_GLOB
-for rcfile in "${ZIM_DIR}"/templates/; do
-    ln -s "$rcfile" "${ZDOTDIR:-$HOME}/.${rcfile:t}"
-done
+echo 'linking dotfiles'
+stow -d ${ZIM_DIR} -t ${HOME} -S templates
 
-source $ZIM_DIR/templates/zlogin
+cat <<EOF
+Open a new terminal and finish optimization (this is only needed once, hereafter it will happen upon desktop/tty login):
+source ${ZDOTDIR:-${HOME}}/.zlogin
+EOF
