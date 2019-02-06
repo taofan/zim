@@ -1,14 +1,11 @@
+# vim:et sts=2 sw=2 ft=zsh
+#
 # Eriner's Theme - fork of agnoster
 # A Powerline-inspired theme for ZSH
 #
-# # README
-#
-# In order for this theme to render correctly, you will need a
-# font with powerline symbols. A simple way to add the powerline
-# symbols is to follow the instructions here: 
-# https://simplyian.com/2014/03/28/using-powerline-symbols-with-your-current-font/
-#
-# # Goals
+# In order for this theme to render correctly, a font with Powerline symbols is
+# required. A simple way to install a font with Powerline symbols is to follow
+# the instructions here: https://github.com/powerline/fonts#installation
 #
 # The aim of this theme is to only show you *relevant* information. Like most
 # prompts, it will only show git information when in a git working directory.
@@ -16,145 +13,128 @@
 # hostname to whether the last call exited with an error to whether background
 # jobs are running in this shell will all be displayed automatically when
 # appropriate.
+#
+# Requires the `git-info` zmodule to be included in the .zimrc file.
 
-### Segment drawing
-# A few utility functions to make it easy and re-usable to draw segmented prompts
+prompt_eriner_help () {
+  cat <<EOH
+This prompt is color-scheme-able. You can customize it using:
 
-CURRENT_BG='NONE'
-PRIMARY_FG=black
+    prompt eriner [status_color] [pwd_color] [git_clean_color] [git_dirty_color]
 
-# Characters
-function {
-  local LC_ALL="" LC_CTYPE="en_US.UTF-8"
-  SEGMENT_SEPARATOR="\ue0b0"
-  PLUSMINUS="\u00b1"
-  BRANCH="\ue0a0"
-  DETACHED="\u27a6"
-  CROSS="\u2718"
-  LIGHTNING="\u26a1"
-  GEAR="\u2699"
+where the parameters are the background colors for each segment. The default
+values are black, cyan, green, and yellow.
+
+In order for this prompt to render correctly, a font with Powerline symbols is
+required. A simple way to install a font with Powerline symbols is to follow
+the instructions here: https://github.com/powerline/fonts#installation
+EOH
 }
 
-# Begin a segment
-# Takes two arguments, background and foreground. Both can be omitted,
-# rendering default background/foreground.
-prompt_segment() {
-  local bg fg
-  [[ -n ${1} ]] && bg="%K{${1}}" || bg="%k"
-  [[ -n ${2} ]] && fg="%F{${2}}" || fg="%f"
-  if [[ $CURRENT_BG != 'NONE' && ${1} != $CURRENT_BG ]]; then
-    print -n "%{${bg}%F{${CURRENT_BG}}%}${SEGMENT_SEPARATOR}%{${fg}%}"
-  else
-    print -n "%{${bg}%}%{${fg}%}"
-  fi
-  CURRENT_BG=${1}
-  [[ -n ${3} ]] && print -n ${3}
-}
-
-# End the prompt, closing any open segments
-prompt_end() {
-  if [[ -n $CURRENT_BG ]]; then
-    print -n "%{%k%F{${CURRENT_BG}}%}${SEGMENT_SEPARATOR}"
-  else
-    print -n "%{%k%}"
-  fi
-  print -n "%{%f%}"
-  CURRENT_BG=''
-}
-
-### Prompt components
-# Each component will draw itself, and hide itself if no information needs to be shown
-
-# Context: user@hostname (who am I and where am I)
-prompt_context() {
-  if [[ ${USER} != ${DEFAULT_USER} || -n ${SSH_CONNECTION} ]]; then
-    prompt_segment ${PRIMARY_FG} default " %(!.%{%F{yellow}%}.)${USER}@%m "
-  fi
-}
-
-# Ranger: <https://github.com/ranger/ranger>, which can spawn ${SHELL}
-# under its own process
-prompt_ranger() {
-  if [[ $((RANGER_LEVEL)) -ne 0 ]]; then
-    local color=blue
-    prompt_segment ${color} ${PRIMARY_FG}
-    print -Pn " r"
-  fi
-}
-
-# Git: branch/detached head, dirty status
-prompt_git() {
-  local color ref
-  is_dirty() {
-    test -n "$(command git status --porcelain --ignore-submodules)"
-  }
-  ref=${vcs_info_msg_0_}
-  if [[ -n ${ref} ]]; then
-    if is_dirty; then
-      color=yellow
-      ref="${ref} ${PLUSMINUS}"
-    else
-      color=green
-      ref="${ref} "
-    fi
-    if [[ "${ref/.../}" == ${ref} ]]; then
-      ref="${BRANCH} ${ref}"
-    else
-      ref="$DETACHED ${ref/.../}"
-    fi
-    prompt_segment ${color} ${PRIMARY_FG}
-    print -Pn " ${ref}"
-  fi
-}
-
-# Dir: current working directory
-prompt_dir() {
-  prompt_segment cyan ${PRIMARY_FG} " $(short_pwd) "
-}
-
-# Status:
-# - was there an error
-# - am I root
-# - are there background jobs?
-prompt_status() {
-  local symbols
-  symbols=()
-  [[ ${RETVAL} -ne 0 ]] && symbols+="%{%F{red}%}${CROSS}"
-  [[ ${UID} -eq 0 ]] && symbols+="%{%F{yellow}%}${LIGHTNING}"
-  [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{cyan}%}${GEAR}"
-
-  [[ -n ${symbols} ]] && prompt_segment ${PRIMARY_FG} default " ${symbols} "
-}
-
-## Main prompt
 prompt_eriner_main() {
-  RETVAL=$?
-  CURRENT_BG='NONE'
-  prompt_status
-  prompt_context
-  prompt_ranger
-  prompt_dir
-  prompt_git
-  prompt_end
+  local prompt_eriner_retval=${?}
+  local prompt_eriner_color1=${1:-black}
+  local prompt_eriner_color2=${2:-cyan}
+
+  ### Segment drawing
+  # Utility functions to make it easy and re-usable to draw segmented prompts.
+
+  local prompt_eriner_bg
+
+  # Begin a segment. Takes two arguments, background color and contents of the
+  # new segment.
+  prompt_eriner_segment() {
+    print -n "%K{${1}}"
+    [[ -n ${prompt_eriner_bg} ]] && print -n "%F{${prompt_eriner_bg}}"
+    print -n "${2}"
+    prompt_eriner_bg=${1}
+  }
+
+  prompt_eriner_standout_segment() {
+    print -n "%S%F{${1}}"
+    [[ -n ${prompt_eriner_bg} ]] && print -n "%K{${prompt_eriner_bg}}%k"
+    print -n "${2}%s"
+    prompt_eriner_bg=${1}
+  }
+
+  # End the prompt, closing last segment.
+  prompt_eriner_end() {
+    print -n "%k%F{${prompt_eriner_bg}}%f "
+  }
+
+  ### Prompt components
+  # Each component will draw itself, or hide itself if no information needs to
+  # be shown.
+
+  # Status: Was there an error? Am I root? Are there background jobs? Ranger
+  # spawned shell? Who and where am I (user@hostname)?
+  prompt_eriner_status() {
+    local segment=''
+    (( prompt_eriner_retval )) && segment+=' %F{red}✘'
+    (( UID == 0 )) && segment+=' %F{yellow}⚡'
+    (( $(jobs -l | wc -l) )) && segment+=' %F{cyan}⚙'
+    (( RANGER_LEVEL )) && segment+=' %F{cyan}r'
+    if [[ ${USER} != ${DEFAULT_USER} || -n ${SSH_CLIENT} ]]; then
+       segment+=" %F{%(!.yellow.default)}${USER}@%m"
+    fi
+    if [[ -n ${segment} ]]; then
+      prompt_eriner_segment ${prompt_eriner_color1} "${segment} "
+    fi
+  }
+
+  # Pwd: current working directory.
+  prompt_eriner_pwd() {
+    prompt_eriner_standout_segment ${prompt_eriner_color2} " $(short_pwd) "
+  }
+
+  # Git: branch/detached head, dirty status.
+  prompt_eriner_git() {
+    if [[ -n ${git_info} ]]; then
+      local indicator
+      [[ ${git_info[color]} == yellow ]] && indicator=' ±'
+      prompt_eriner_standout_segment ${git_info[color]} " ${(e)git_info[prompt]}${indicator} "
+    fi
+  }
+
+  prompt_eriner_status
+  prompt_eriner_pwd
+  prompt_eriner_git
+  prompt_eriner_end
 }
 
 prompt_eriner_precmd() {
-  vcs_info
-  PROMPT='%{%f%b%k%}$(prompt_eriner_main) '
+  (( ${+functions[git-info]} )) && git-info
 }
 
 prompt_eriner_setup() {
-  autoload -Uz add-zsh-hook
-  autoload -Uz vcs_info
+  autoload -Uz add-zsh-hook && add-zsh-hook precmd prompt_eriner_precmd
 
-  prompt_opts=(cr subst percent)
+  prompt_opts=(cr percent sp subst)
 
-  add-zsh-hook precmd prompt_eriner_precmd
+  local prompt_eriner_color3=${3:-green}
+  local prompt_eriner_color4=${4:-yellow}
 
-  zstyle ':vcs_info:*' enable git
-  zstyle ':vcs_info:*' check-for-changes false
-  zstyle ':vcs_info:git*' formats '%b'
-  zstyle ':vcs_info:git*' actionformats '%b (%a)'
+  zstyle ':zim:git-info:branch' format ' %b'
+  zstyle ':zim:git-info:commit' format '➦ %c'
+  zstyle ':zim:git-info:action' format ' (%s)'
+  zstyle ':zim:git-info:clean' format ${prompt_eriner_color3}
+  zstyle ':zim:git-info:dirty' format ${prompt_eriner_color4}
+  zstyle ':zim:git-info:keys' format \
+    'prompt' '%b%c%s' \
+    'color' '%C%D'
+
+  PS1="\$(prompt_eriner_main ${@:1:2})"
+  RPS1=''
 }
 
-prompt_eriner_setup "$@"
+prompt_eriner_preview () {
+  if (( ${#} )); then
+    prompt_preview_theme eriner "${@}"
+  else
+    prompt_preview_theme eriner
+    print
+    prompt_preview_theme eriner black blue green yellow
+  fi
+}
+
+prompt_eriner_setup "${@}"

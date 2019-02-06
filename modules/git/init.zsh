@@ -6,11 +6,11 @@
 # Settings
 #
 
-# Log
-_git_log_medium_format='%C(bold)Commit:%C(reset) %C(green)%H%C(red)%d%n%C(bold)Author:%C(reset) %C(cyan)%an <%ae>%n%C(bold)Date:%C(reset)   %C(blue)%ai (%ar)%C(reset)%n%+B'
-_git_log_oneline_format='%C(green)%h%C(reset) %s%C(red)%d%C(reset)%n'
-_git_log_fullgraph_format='%C(green)%h%C(reset) %<|(50,trunc)%s %C(bold blue)<%an>%C(reset) %C(yellow)(%cd)%C(reset)%C(auto)%d%C(reset)%n'
-_git_log_brief_format='%C(green)%h%C(reset) %s%n%C(blue)(%ar by %an)%C(red)%d%C(reset)%n'
+# Log colour scheme has yellow commit hash, bold blue author, cyan date, auto ref names
+# See https://git-scm.com/docs/pretty-formats
+_git_log_medium_format='%C(bold)Commit:%C(reset) %C(yellow)%H%C(auto)%d%n%C(bold)Author:%C(reset) %C(bold blue)%an <%ae>%n%C(bold)Date:%C(reset)   %C(cyan)%ai (%ar)%C(reset)%n%+B'
+_git_log_oneline_format='%C(yellow)%h%C(reset) %s%C(auto)%d%C(reset)'
+_git_log_oneline_medium_format='%C(yellow)%h%C(reset) %<|(60,trunc)%s %C(bold blue)<%an> %C(reset)%C(cyan)(%ar)%C(auto)%d%C(reset)'
 
 #
 # Aliases
@@ -22,14 +22,14 @@ alias g='git'
 # Branch (b)
 alias gb='git branch'
 alias gbc='git checkout -b'
-alias gbl='git branch -v'
-alias gbL='git branch -av'
-alias gbx='git branch -d'
-alias gbX='git branch -D'
-alias gbm='git branch -m'
-alias gbM='git branch -M'
+alias gbl='git branch -vv'
+alias gbL='git branch --all -vv'
+alias gbm='git branch --move'
+alias gbM='git branch --move --force'
 alias gbs='git show-branch'
-alias gbS='git show-branch -a'
+alias gbS='git show-branch --all'
+alias gbx='git-branch-delete-interactive'
+alias gbX='git-branch-delete-interactive --force'
 
 # Commit (c)
 alias gc='git commit --verbose'
@@ -43,13 +43,12 @@ alias gcp='git cherry-pick --ff'
 alias gcP='git cherry-pick --no-commit'
 alias gcr='git revert'
 alias gcR='git reset "HEAD^"'
-alias gcs='git show'
-alias gcl='git-commit-lost'
+alias gcs='git show --pretty=format:"${_git_log_medium_format}"'
 alias gcS='git commit -S'
-alias gpS='git show --pretty=short --show-signature'
+alias gcv='git verify-commit'
 
 # Conflict (C)
-alias gCl='git status | sed -n "s/^.*both [a-z]*ed: *//p"'
+alias gCl='git --no-pager diff --diff-filter=U --name-only'
 alias gCa='git add $(gCl)'
 alias gCe='git mergetool $(gCl)'
 alias gCo='git checkout --ours --'
@@ -71,13 +70,13 @@ alias gf='git fetch'
 alias gfc='git clone'
 alias gfm='git pull'
 alias gfr='git pull --rebase'
-alias gfu='git remote update -p; git merge --ff-only @\{u\}'
+alias gfu='git fetch --all --prune && git merge --ff-only @\{u\}'
 
 # Grep (g)
 alias gg='git grep'
 alias ggi='git grep --ignore-case'
 alias ggl='git grep --files-with-matches'
-alias ggL='git grep --files-without-matches'
+alias ggL='git grep --files-without-match'
 alias ggv='git grep --invert-match'
 alias ggw='git grep --word-regexp'
 
@@ -89,19 +88,19 @@ alias gid='git diff --no-ext-diff --cached'
 alias giD='git diff --no-ext-diff --cached --word-diff'
 alias gir='git reset'
 alias giR='git reset --patch'
-alias gix='git rm -r --cached'
-alias giX='git rm -rf --cached'
+alias gix='git rm --cached -r'
+alias giX='git rm --cached -rf'
 
 # Log (l)
 alias gl='git log --topo-order --pretty=format:"${_git_log_medium_format}"'
 alias gls='git log --topo-order --stat --pretty=format:"${_git_log_medium_format}"'
 alias gld='git log --topo-order --stat --patch --full-diff --pretty=format:"${_git_log_medium_format}"'
 alias glo='git log --topo-order --pretty=format:"${_git_log_oneline_format}"'
+alias glO='git log --topo-order --pretty=format:"${_git_log_oneline_medium_format}"'
 alias glg='git log --topo-order --all --graph --pretty=format:"${_git_log_oneline_format}"'
-alias glG='git log --topo-order --all --graph --pretty=format:"${_git_log_fullgraph_format}" --date=relative'
-alias glb='git log --topo-order --pretty=format:"${_git_log_brief_format}"'
+alias glG='git log --topo-order --all --graph --pretty=format:"${_git_log_oneline_medium_format}"'
+alias glv='git log --topo-order --show-signature --pretty=format:"${_git_log_medium_format}"'
 alias glc='git shortlog --summary --numbered'
-alias glS='git log --show-signature'
 
 # Merge (m)
 alias gm='git merge'
@@ -112,7 +111,8 @@ alias gmt='git mergetool'
 
 # Push (p)
 alias gp='git push'
-alias gpf='git push --force'
+alias gpf='git push --force-with-lease'
+alias gpF='git push --force'
 alias gpa='git push --all'
 alias gpA='git push --all && git push --tags'
 alias gpt='git push --tags'
@@ -135,7 +135,6 @@ alias gRm='git remote rename'
 alias gRu='git remote update'
 alias gRp='git remote prune'
 alias gRs='git remote show'
-alias gRb='git-hub-browse'
 
 # Stash (s)
 alias gs='git stash'
@@ -143,14 +142,13 @@ alias gsa='git stash apply'
 alias gsx='git stash drop'
 alias gsX='git-stash-clear-interactive'
 alias gsl='git stash list'
-alias gsL='git-stash-dropped'
 alias gsd='git stash show --patch --stat'
 alias gsp='git stash pop'
 alias gsr='git-stash-recover'
 alias gss='git stash save --include-untracked'
 alias gsS='git stash save --patch --no-keep-index'
 alias gsw='git stash save --include-untracked --keep-index'
-alias gsu='git stash show -p | git apply -R'
+alias gsu='git stash show --patch | git apply --reverse'
 
 # Submodule (S)
 alias gS='git submodule'
@@ -165,20 +163,22 @@ alias gSu='git submodule foreach git pull origin master'
 alias gSx='git-submodule-remove'
 
 # Tag (t)
-alias gts='git tag -s'
+alias gt='git tag'
+alias gts='git tag --sign'
 alias gtv='git verify-tag'
+alias gtx='git tag --delete'
 
-# Working Copy (w)
+# Working tree (w)
 alias gws='git status --short'
 alias gwS='git status'
 alias gwd='git diff --no-ext-diff'
 alias gwD='git diff --no-ext-diff --word-diff'
 alias gwr='git reset --soft'
 alias gwR='git reset --hard'
-alias gwc='git clean -n'
-alias gwC='git clean -df'
+alias gwc='git clean --dry-run'
+alias gwC='git clean -d --force'
 alias gwx='git rm -r'
 alias gwX='git rm -rf'
 
 # Misc
-alias g..='cd $(git-root || print .)'
+alias g..='cd "$(git-root || print .)"'
