@@ -80,8 +80,6 @@ zhighlighters=(main brackets)
 
 # Load these ssh identities with the ssh module
 #zssh_ids=(id_rsa)
-<<<<<<< HEAD:templates/.zimrc
-=======
 
 #
 # Pacman
@@ -93,5 +91,3 @@ zhighlighters=(main brackets)
 # Load any helper scripts as defined here
 #zpacman_helper=(aur)
 
-
->>>>>>> upstream/master:templates/zimrc
